@@ -8,13 +8,16 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import javax.swing.text.html.HTMLDocument.HTMLReader.ParagraphAction;
+
 import sun.nio.cs.MS1250;
 
 public class UdpServer {
 
-	int port = 7000;
+	int port = 7007;
 	private DatagramSocket socket;
 	private InetAddress remoteIP;
+	private int remotePort;
 	
 	public UdpServer(){
 		try {
@@ -36,8 +39,9 @@ public class UdpServer {
 						 send("20111003632 Òü´¨¶«");
 //						 break;
 					}
+					System.out.println("==========");
 					socket.close();
-				} catch (IOException e) {
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
@@ -47,7 +51,7 @@ public class UdpServer {
 	  
 	  public void send(String msg) throws IOException {
 		  byte[] buff = msg.getBytes("GBK");
-		  DatagramPacket packet = new DatagramPacket(buff, buff.length, remoteIP, port);
+		  DatagramPacket packet = new DatagramPacket(buff, buff.length, remoteIP, remotePort);
 		  socket.send(packet);
 	  }
 	  
@@ -56,6 +60,8 @@ public class UdpServer {
 		  DatagramPacket packet = new DatagramPacket(buff, buff.length);
 		  socket.receive(packet);
 		  remoteIP = packet.getAddress();
+		  remotePort = packet.getPort();
+		  System.out.println(remoteIP + ":" + remotePort);
 		  return new String(packet.getData(),0,packet.getLength(), "GBK");
 	  }
 	  

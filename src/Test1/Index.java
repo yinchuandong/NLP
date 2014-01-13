@@ -1,4 +1,4 @@
-package Test;
+package Test1;
 
 public class Index {
 

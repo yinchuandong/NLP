@@ -1,0 +1,8 @@
+S->NP VP
+NP->ART ADJ N
+NP->ART N
+VP->V NP
+ART->the|a
+N->boy|cat
+V->saw
+ADJ->dirty

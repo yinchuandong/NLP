@@ -23,7 +23,7 @@ import javax.swing.JButton;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.JTextArea;
 
-public class FromFrame extends JFrame {
+public class IndexFrame extends JFrame {
 
 	private JPanel contentPane;
 	private JTree tree;
@@ -43,7 +43,7 @@ public class FromFrame extends JFrame {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					FromFrame frame = new FromFrame();
+					IndexFrame frame = new IndexFrame();
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -55,7 +55,7 @@ public class FromFrame extends JFrame {
 	/**
 	 * Create the frame.
 	 */
-	public FromFrame() {
+	public IndexFrame() {
 		parsing = new Parsing();
 		initComponents();
 		bindEvent();

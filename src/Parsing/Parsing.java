@@ -41,23 +41,41 @@ public class Parsing {
 		nodeStack = new Stack<>();
 		posStack = new Stack<>();
 		indexStack = new Stack<>();
-		init();
+		reset();
 	}
 	
-	private void init(){
-		wordsList.add("the");
-		wordsList.add("boy");
-		wordsList.add("saw");
-		wordsList.add("a");
-		wordsList.add("dirty");
-		wordsList.add("cat");
+	/**
+	 * 重置内部数据
+	 */
+	public void reset(){
+		wordsList.clear();
+		curNodeList.clear();
+		backStack.clear();
+		nodeStack.clear();
+		posStack.clear();
+		indexStack.clear();
+		position = 0;
+		index = 0;
+//		wordsList.add("the");
+//		wordsList.add("boy");
+//		wordsList.add("saw");
+//		wordsList.add("a");
+//		wordsList.add("dirty");
+//		wordsList.add("cat");
 	}
 	
-	public void readGuide(String guidePath){
+	public void setWordsList(ArrayList<String> wordsList){
+		this.wordsList = wordsList;
+	}
+	
+	public String readGuide(String guidePath){
+		guideMap.clear();
+		String resultStr = "";
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(guidePath));
 			String lineStr = null;
 			while((lineStr = reader.readLine()) != null){
+				resultStr += lineStr + "\r\n";
 				String[] lineArr = lineStr.split("->");
 				if (lineArr.length < 2) {
 					continue;
@@ -84,8 +102,12 @@ public class Parsing {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		return resultStr;
 	}
 	
+	/**
+	 * 控制台输出规则信息
+	 */
 	public void display(){
 		Iterator<String> iterator = guideMap.keySet().iterator();
 		while (iterator.hasNext()) {
@@ -110,18 +132,24 @@ public class Parsing {
 	 * @return
 	 * @throws CloneNotSupportedException
 	 */
-	private ArrayList<ArrayList<Node>> getGuideMap(String pos) throws CloneNotSupportedException{
+	private ArrayList<ArrayList<Node>> getGuideMap(String pos){
 		ArrayList<ArrayList<Node>> fromList = guideMap.get(pos);
 		ArrayList<ArrayList<Node>> parentList = new ArrayList<>();
-		for (ArrayList<Node> parent : fromList) {
-			ArrayList<Node> sonList = new ArrayList<>();
-			for (Node node : parent) {
-				Node cloneNode = (Node)node.clone();
-				sonList.add(cloneNode);
+		try {
+			if (fromList == null) {
+				return null;
 			}
-			parentList.add(sonList);
+			for (ArrayList<Node> parent : fromList) {
+				ArrayList<Node> sonList = new ArrayList<>();
+				for (Node node : parent) {
+					Node cloneNode = new Node(node.pos);
+					sonList.add(cloneNode);
+				}
+				parentList.add(sonList);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		
 		return parentList;
 	}
 
@@ -130,19 +158,21 @@ public class Parsing {
 		Stack<ArrayList<Node>> curListStack = new Stack<>();
 		
 		Node head = new Node("S");
-//		curNodeList.add(head);
 		nodeStack.push(head);
 		while(!nodeStack.empty()){
 			Node node = nodeStack.pop();
+			//将当前访问的节点加入到访问过的集合中
 			curNodeList.add(node);
 			
 			//取得转移的规则S->NP VP的列表
 			ArrayList<ArrayList<Node>> fromList = guideMap.get(node.pos);
+//			ArrayList<ArrayList<Node>> fromList = this.getGuideMap(node.pos);
 			
 			//到了终端字符
 			String wordStr = wordsList.get(position);
 			if (fromList == null || fromList.size() == 0) {
 				if (node.pos.indexOf(wordStr) != -1) {//如果匹配终端字符
+					node.word = wordStr;
 					position ++;
 				}else{//不匹配终端字符
 					if (backStack != null && backStack.size() != 0) {
@@ -199,6 +229,10 @@ public class Parsing {
 		System.out.println("end calculate");
 	}
 	
+	
+	/**
+	 * 输出字符串类型(decrapt)
+	 */
 	public void output(){
 		String result = "";
 		Stack<String> lBracketStack = new Stack<>();
@@ -265,14 +299,14 @@ public class Parsing {
 	}
 	
 	public static void main(String[] args) throws CloneNotSupportedException{
-//		Parsing parsing = new Parsing();
-//		parsing.readGuide("parsing_guide.txt");
-//		System.out.println("------------end--------------");
-//		parsing.display();
-//		parsing.calculate();
-//		System.out.println("calculate--end");
-//		
-//		parsing.getTreeNode();
+		Parsing parsing = new Parsing();
+		parsing.readGuide("parsing_guide.txt");
+		System.out.println("------------end--------------");
+		parsing.display();
+		parsing.calculate();
+		System.out.println("calculate--end");
+		
+		parsing.getTreeNode();
 		
 //		parsing.output();
 //		for (Node node : parsing.curNodeList) {
@@ -286,8 +320,16 @@ public class Parsing {
 		ArrayList<Node> list2 = (ArrayList<Node>)list1.clone();
 		list2.get(0).pos = "list21";
 		list2.remove(1);
+//		
+//		ArrayList<String> list1 = new ArrayList<>();
+//		list1.add("list11");
+//		list1.add("list12");
+//		
+//		ArrayList<String> list2 = (ArrayList<String>)list1.clone();
+////		list2.get(0) = "list21";
+//		list2.remove(1);
 		
-		System.out.println(list1.get(0).pos);
+		System.out.println(list1.get(0));
 		
 	}
 	

@@ -7,6 +7,7 @@ public class Node implements Cloneable{
 	int type = 0;//0代表非终端节点，1代表终端节点
 	Node parent = null;
 	ArrayList<Node> child = null;
+	String word = null;
 	
 	public Node(){
 //		parent = new Node();

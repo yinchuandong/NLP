@@ -104,6 +104,12 @@ public class Parsing {
 		}
 	}
 	
+	/**
+	 * 获得规则列表，每一条规则
+	 * @param pos
+	 * @return
+	 * @throws CloneNotSupportedException
+	 */
 	private ArrayList<ArrayList<Node>> getGuideMap(String pos) throws CloneNotSupportedException{
 		ArrayList<ArrayList<Node>> fromList = guideMap.get(pos);
 		ArrayList<ArrayList<Node>> parentList = new ArrayList<>();

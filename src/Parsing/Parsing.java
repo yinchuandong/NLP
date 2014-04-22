@@ -7,11 +7,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Stack;
+
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 
 import com.sun.corba.se.impl.oa.toa.TOA;
 import com.sun.org.apache.bcel.internal.generic.LNEG;
 import com.sun.org.apache.bcel.internal.generic.POP;
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.ChildLoader;
 
 import sun.awt.CharsetString;
 import sun.security.util.Length;
@@ -44,6 +49,7 @@ public class Parsing {
 		wordsList.add("boy");
 		wordsList.add("saw");
 		wordsList.add("a");
+		wordsList.add("dirty");
 		wordsList.add("cat");
 	}
 	
@@ -97,6 +103,21 @@ public class Parsing {
 			
 		}
 	}
+	
+	private ArrayList<ArrayList<Node>> getGuideMap(String pos) throws CloneNotSupportedException{
+		ArrayList<ArrayList<Node>> fromList = guideMap.get(pos);
+		ArrayList<ArrayList<Node>> parentList = new ArrayList<>();
+		for (ArrayList<Node> parent : fromList) {
+			ArrayList<Node> sonList = new ArrayList<>();
+			for (Node node : parent) {
+				Node cloneNode = (Node)node.clone();
+				sonList.add(cloneNode);
+			}
+			parentList.add(sonList);
+		}
+		
+		return parentList;
+	}
 
 	@SuppressWarnings("unchecked")
 	public void calculate(){
@@ -122,6 +143,7 @@ public class Parsing {
 						nodeStack = backStack.pop();
 						position = posStack.pop();
 					}
+					//移除不匹配的元素，直到出分支的位置
 					index = indexStack.pop();
 					while(index + 1 < curNodeList.size()){
 						curNodeList.remove(index+1);
@@ -136,30 +158,31 @@ public class Parsing {
 			try {
 				//将候选状态入backstack栈
 				for (int i = 1; i < fromList.size(); i++) {
-					ArrayList<Node> tmpList = fromList.get(i);
+					ArrayList<Node> tmpList = (ArrayList<Node>)fromList.get(i).clone();
 					Stack<Node> tmpCurStack = (Stack<Node>) nodeStack.clone();
 					for(int j = tmpList.size() - 1; j >= 0; j--){
-						tmpCurStack.push(tmpList.get(j));
+						Node tmpNode = tmpList.get(j);
+						tmpNode.parent = node;
+						tmpCurStack.push(tmpNode);
 					}
+					//记录候选状态
 					backStack.push(tmpCurStack);
-					//记录发生歧义的位置
 					posStack.push(position);
-					//将curNodeList记录
-//					curNodeList.addAll(tmpList);
+					////记录发生歧义的位置,如NP->ART ADJ N  NP->ART N，则保存np的index
 					indexStack.push(curNodeList.size()-1);
 					curListStack.push(tmpList);
 				}
 				
 				//将当前状态加入nodestack
 				int fLen = fromList.get(0).size();
+				ArrayList<Node> tmpCloneList = (ArrayList<Node>)fromList.get(0).clone();
 				node.child.clear();
-				node.child.addAll(fromList.get(0));
+				node.child.addAll(tmpCloneList);
 				for(int i=fLen - 1; i >= 0; i--){
-					Node tmpNode = fromList.get(0).get(i);
+					Node tmpNode = tmpCloneList.get(i);
 //					tmpNode.parent = (Node)node.clone();
 					tmpNode.parent = new Node(node.pos);
 					nodeStack.push(tmpNode);
-//					curNodeList.add(fromList.get(0).get(fLen - 1 - i));
 				}
 				
 			} catch (Exception e) {
@@ -167,31 +190,99 @@ public class Parsing {
 			}
 			
 		}
+		System.out.println("end calculate");
+	}
+	
+	public void output(){
+		String result = "";
+		Stack<String> lBracketStack = new Stack<>();
+		Stack<String> rBracketStack = new Stack<>();
+		Stack<Node> listStack = new Stack<>();
+		listStack.push(curNodeList.get(0));
+		lBracketStack.push("(");
+		rBracketStack.push(")");
+		Node node = listStack.peek();
+		while(!listStack.empty()){
+			if (node.child == null || node.child.size() == 0) {
+				String lb = lBracketStack.pop();
+				String rb = rBracketStack.pop();
+				listStack.pop();
+				result = lb + node.pos + rb;
+				System.out.println(result);
+				if (listStack.size() == 0) {
+					continue;
+				}
+				node = listStack.peek();
+				
+				if (node.child.size() > 0) {
+					node.child.remove(0);
+				}
+//				if (node.child.size() >= 1) {
+//					listStack.push(node.child.get(0));
+//				}
+			}else{
+				Node tmp = node.child.get(0);
+				listStack.push(tmp);
+				lBracketStack.push("(");
+				rBracketStack.push(")");
+				node = tmp;
+			}
+		}
+		
+	}
+	
+	/**
+	 * 将结果生成一颗树
+	 * @return
+	 */
+	public DefaultMutableTreeNode getTreeNode(){
+		LinkedList<DefaultMutableTreeNode> treeQueue = new LinkedList<>();
+		LinkedList<Node> nodeQueue = new LinkedList<>();
+		Node headNode = curNodeList.get(0);
+		DefaultMutableTreeNode headTree = new DefaultMutableTreeNode(headNode);
+		DefaultMutableTreeNode pTree = null;
+		treeQueue.add(headTree);
+		nodeQueue.offer(headNode);
+		while(nodeQueue.size() != 0){
+			Node tmpNode = nodeQueue.poll();
+			pTree = treeQueue.poll();
+			if (tmpNode.child != null && tmpNode.child.size() != 0) {
+				for (Node node : tmpNode.child) {
+					nodeQueue.offer(node);
+					DefaultMutableTreeNode tmpTree = new DefaultMutableTreeNode(node);
+					pTree.add(tmpTree);
+					treeQueue.offer(tmpTree);
+				}
+			}
+		}
+		return headTree;
 	}
 	
 	public static void main(String[] args) throws CloneNotSupportedException{
-		Parsing parsing = new Parsing();
-		parsing.readGuide("parsing_guide.txt");
-		System.out.println("------------end--------------");
-		parsing.display();
-		parsing.calculate();
-		System.out.println("calculate--end");
-		
-		for (Node node : parsing.curNodeList) {
-			System.out.print(node.pos+" ");
-		}
-		
-//		Node node1 = new Node("node1");
-//		node1.child = new ArrayList<>();
-//		node1.child.push(new Node("node1-childlist"));
-//		node1.parent = new Node("node1-parent");
+//		Parsing parsing = new Parsing();
+//		parsing.readGuide("parsing_guide.txt");
+//		System.out.println("------------end--------------");
+//		parsing.display();
+//		parsing.calculate();
+//		System.out.println("calculate--end");
 //		
-//		Node node2 = (Node)node1.clone();
-//		node2.pos = "node2";
-//		node2.child.remove();
-//		node2.parent.pos = "node2-parent";
-//		System.out.println(node1.pos+":"+node1.child.size()+":"+node1.parent.pos);
-//		System.out.println(node2.pos+":"+node2.child.size()+":"+node2.parent.pos);
+//		parsing.getTreeNode();
+		
+//		parsing.output();
+//		for (Node node : parsing.curNodeList) {
+//			System.out.print(node.pos+" ");
+//		}
+		
+		ArrayList<Node> list1 = new ArrayList<>();
+		list1.add(new Node("list11"));
+		list1.add(new Node("list12"));
+		
+		ArrayList<Node> list2 = (ArrayList<Node>)list1.clone();
+		list2.get(0).pos = "list21";
+		list2.remove(1);
+		
+		System.out.println(list1.get(0).pos);
+		
 	}
 	
 }

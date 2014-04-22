@@ -20,7 +20,7 @@ public class Node implements Cloneable{
 	public Node(String pos, int type){
 		this.pos = pos;
 		this.type = type;
-		parent = new Node();
+//		parent = new Node();
 		child = new ArrayList<>();
 	}
 
@@ -37,5 +37,9 @@ public class Node implements Cloneable{
 		return node;
 	}
 	
+	@Override
+	public String toString(){
+		return this.pos;
+	}
 	
 }

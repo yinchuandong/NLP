@@ -1,0 +1,8 @@
+N->people,0.5
+N->fish,0.2
+N->tanks,0.2
+N->rods,0.1
+V->people,0.1
+V->fish,0.6
+V->tanks,0.3
+p->with,1.0

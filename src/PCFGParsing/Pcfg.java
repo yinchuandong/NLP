@@ -83,7 +83,7 @@ public class Pcfg {
 					double score = guideMap.get(key);
 					String skey = i + "," + (i+1) + "," + A;
 					scoreMap.put(skey,score);
-					backMap.put(skey, new Triple(i, i+1, wordsList.get(i), true));
+					backMap.put(skey, new Triple(i, i+1, wordsList.get(i), false));
 				}
 			}
 
@@ -216,7 +216,7 @@ public class Pcfg {
 		}
 	}
 	
-	public void output(){
+	public DefaultMutableTreeNode output(){
 		System.out.println("----------start of output----------------------------");
 		LinkedList<Triple> backQueue = new LinkedList<>();
 		LinkedList<DefaultMutableTreeNode> treeQueue = new LinkedList<>();
@@ -231,7 +231,7 @@ public class Pcfg {
 		while(backQueue.size() != 0){
 			pTriple = backQueue.poll();
 			pNode = treeQueue.poll();
-			if(!pTriple.isTerm()){//如果是非终端词
+			if(pTriple != null && pNode != null){//如果是非终端词
 				int begin = pTriple.getBegin();
 				int end = pTriple.getEnd();
 				if(pTriple.isSplited()){//如果可以分裂
@@ -255,6 +255,7 @@ public class Pcfg {
 					Triple bTriple = backMap.get(keyB);
 					backQueue.offer(bTriple);
 					DefaultMutableTreeNode bNode = new DefaultMutableTreeNode(pTriple.getB());
+					treeQueue.offer(bNode);
 					pNode.add(bNode);
 					
 					System.out.println(begin + "," + end + "--" + pTriple.getB() + "--" + pTriple.getSplitPos());
@@ -266,6 +267,7 @@ public class Pcfg {
 		}
 
 		System.out.println("end of output");
+		return headNode;
 	}
 
 

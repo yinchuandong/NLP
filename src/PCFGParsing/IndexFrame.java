@@ -56,9 +56,12 @@ public class IndexFrame extends JFrame {
 	 * Create the frame.
 	 */
 	public IndexFrame() {
+		//初始化pcfg模型
 		model = new Pcfg();
+
 		initComponents();
 		bindEvent();
+		this.inputArea.setText("fish people fish tanks");
 	}
 	
 	private void bindEvent(){
@@ -66,6 +69,10 @@ public class IndexFrame extends JFrame {
 			
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
+				//载入规则集
+				String guideStr = model.loadGuide("pcfg_nonterm_guide.txt");
+				guideArea.setText(guideStr);
+				isGuidLoaded = true;
 			}
 		});
 		
@@ -74,37 +81,37 @@ public class IndexFrame extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				
-//				if (!isGuidLoaded) {
-//					JOptionPane.showConfirmDialog(null, "还未加载规则");
-//					return;
-//				}
-//				
-//				String inputStr = inputArea.getText();
-//				if (inputStr == null || inputStr.equals("")) {
-//					JOptionPane.showConfirmDialog(null, "内容不能为空");
-//					return ;
-//				}
-//				String[] arr = inputStr.split(" ");
-//				ArrayList<String> wordsList = new ArrayList<>();
-//				for (String string : arr) {
-//					wordsList.add(string);
-//				}
-				model.loadGuide("pcfg_nonterm_guide.txt");
+				if (!isGuidLoaded) {
+					JOptionPane.showConfirmDialog(null, "还未加载规则");
+					return;
+				}
+				
+				String inputStr = inputArea.getText();
+				if (inputStr == null || inputStr.equals("")) {
+					JOptionPane.showConfirmDialog(null, "内容不能为空");
+					return ;
+				}
+				String[] arr = inputStr.split(" ");
+				ArrayList<String> wordsList = new ArrayList<>();
+				for (String string : arr) {
+					wordsList.add(string);
+				}
+				
+				model.setWords(wordsList);
 				model.preHandle();
 				model.doHandle();
-				tree = new JTree(model.output());
+				DefaultMutableTreeNode resultNode = model.output();
+				if(resultNode == null){
+					JOptionPane.showConfirmDialog(null, "fail to parse");
+					return;
+				}
+				tree = new JTree(resultNode);
 				expandTree(tree);
 				scrollPane.setViewportView(tree);
 			}
 		});
 	}
 	
-	public void initTree(){
-//		model = new Pcfg();
-//		tree = new JTree(parsing.getTreeNode());
-//		expandTree(tree);
-//		scrollPane.setViewportView(tree);
-	}
 	
 	/** 
 	* 展开一棵树 

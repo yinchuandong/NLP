@@ -33,7 +33,7 @@ public class Pcfg {
 		nonTermList = new ArrayList<String>();
 		scoreMap = new HashMap<String, Double>();
 		backMap = new HashMap<String, Triple>();
-		this.init();
+//		this.init();
 	}
 	
 	private void init(){
@@ -68,6 +68,14 @@ public class Pcfg {
 			e.printStackTrace();
 		}
 		return resultStr;
+	}
+	
+	/**
+	 * 设置待处理的单词的
+	 * @param wordsList
+	 */
+	public void setWords(ArrayList<String> wordsList){
+		this.wordsList = wordsList;
 	}
 
 	/**
@@ -215,15 +223,38 @@ public class Pcfg {
 			}
 		}
 	}
+
+	private String getFinalMaxTripe(){
+		String maxKey = null;
+		double maxProb = 0;
+		int len = wordsList.size();
+		for(String word : nonTermList){
+			String key = 0 + "," + len + "," + word;
+			if(scoreMap.containsKey(key)){
+				double prob = scoreMap.get(key);
+				if(prob > maxProb) {
+					maxProb = prob;
+					maxKey = key;
+				}
+			}
+		}
+		return maxKey;
+	}
 	
 	public DefaultMutableTreeNode output(){
 		System.out.println("----------start of output----------------------------");
 		LinkedList<Triple> backQueue = new LinkedList<>();
 		LinkedList<DefaultMutableTreeNode> treeQueue = new LinkedList<>();
-		Triple headTriple = backMap.get("0,4,S");//backMap的头指针
+	
+		String maxKey = this.getFinalMaxTripe();
+		if(maxKey == null){
+			return null;
+		}
+
+		Triple headTriple = backMap.get(maxKey);//backMap的头指针
 		Triple pTriple = headTriple;//遍历backMap时的指针
 		//树形图的头指针
-		DefaultMutableTreeNode headNode = new DefaultMutableTreeNode("S");
+		DefaultMutableTreeNode headNode = new DefaultMutableTreeNode(maxKey);
 		//遍历属性图的指针
 		DefaultMutableTreeNode pNode = headNode;
 		backQueue.offer(headTriple);
@@ -242,8 +273,10 @@ public class Pcfg {
 					Triple cTriple = backMap.get(keyC);
 					backQueue.offer(bTriple);
 					backQueue.offer(cTriple);
-					DefaultMutableTreeNode bNode = new DefaultMutableTreeNode(pTriple.getB());
-					DefaultMutableTreeNode cNode = new DefaultMutableTreeNode(pTriple.getC());
+//					DefaultMutableTreeNode bNode = new DefaultMutableTreeNode(pTriple.getB());
+//					DefaultMutableTreeNode cNode = new DefaultMutableTreeNode(pTriple.getC());
+					DefaultMutableTreeNode bNode = new DefaultMutableTreeNode(keyB);
+					DefaultMutableTreeNode cNode = new DefaultMutableTreeNode(keyC);
 					treeQueue.offer(bNode);
 					treeQueue.offer(cNode);
 					pNode.add(bNode);
@@ -254,7 +287,8 @@ public class Pcfg {
 					String keyB = begin + "," + end + "," + pTriple.getB();
 					Triple bTriple = backMap.get(keyB);
 					backQueue.offer(bTriple);
-					DefaultMutableTreeNode bNode = new DefaultMutableTreeNode(pTriple.getB());
+//					DefaultMutableTreeNode bNode = new DefaultMutableTreeNode(pTriple.getB());
+					DefaultMutableTreeNode bNode = new DefaultMutableTreeNode(keyB);
 					treeQueue.offer(bNode);
 					pNode.add(bNode);
 					

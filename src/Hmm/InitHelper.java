@@ -110,7 +110,7 @@ public class InitHelper {
 		helper.calFrequency();
 		
 		System.out.println("begin write");
-		helper.write("dict/init.txt");
+		helper.write("dict/hmm_init.txt");
 		System.out.println("end write");
 		
 		long end = System.currentTimeMillis();

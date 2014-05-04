@@ -1,4 +1,4 @@
-package CFGParsing;
+package ParingCFG;
 
 import java.util.ArrayList;
 

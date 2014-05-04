@@ -1,4 +1,4 @@
-package CFGParsing;
+package ParsingPCFG;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
@@ -33,8 +33,8 @@ public class IndexFrame extends JFrame {
 	JButton importBtn;
 	
 	private JScrollPane scrollPane;
-	private Parsing parsing;
 	private boolean isGuidLoaded = false;
+	private PcfgParsing model;
 
 	/**
 	 * Launch the application.
@@ -56,9 +56,12 @@ public class IndexFrame extends JFrame {
 	 * Create the frame.
 	 */
 	public IndexFrame() {
-		parsing = new Parsing();
+		//初始化pcfg模型
+		model = new PcfgParsing();
+
 		initComponents();
 		bindEvent();
+		this.inputArea.setText("fish people fish tanks");
 	}
 	
 	private void bindEvent(){
@@ -66,8 +69,9 @@ public class IndexFrame extends JFrame {
 			
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				String resultStr = parsing.readGuide("parsing_guide.txt");
-				guideArea.setText(resultStr);
+				//载入规则集
+				String guideStr = model.loadGuide("guide/pcfg_guide.txt");
+				guideArea.setText(guideStr);
 				isGuidLoaded = true;
 			}
 		});
@@ -92,21 +96,22 @@ public class IndexFrame extends JFrame {
 				for (String string : arr) {
 					wordsList.add(string);
 				}
-				parsing.reset();
-				parsing.setWordsList(wordsList);
-				parsing.calculate();
-				tree = new JTree(parsing.getTreeNode());
+				
+				model.setWords(wordsList);
+				model.preHandle();
+				model.doHandle();
+				DefaultMutableTreeNode resultNode = model.output();
+				if(resultNode == null){
+					JOptionPane.showConfirmDialog(null, "fail to parse");
+					return;
+				}
+				tree = new JTree(resultNode);
 				expandTree(tree);
 				scrollPane.setViewportView(tree);
 			}
 		});
 	}
 	
-	public void initTree(){
-		tree = new JTree(parsing.getTreeNode());
-		expandTree(tree);
-		scrollPane.setViewportView(tree);
-	}
 	
 	/** 
 	* 展开一棵树 

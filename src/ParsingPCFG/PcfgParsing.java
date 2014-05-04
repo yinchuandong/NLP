@@ -1,4 +1,4 @@
-package PCFGParsing;
+package ParsingPCFG;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -12,7 +12,7 @@ import java.util.Stack;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-public class Pcfg {
+public class PcfgParsing {
 
 	private HashMap<String, Double> guideMap = null;//语符集规则
 	private ArrayList<String> wordsList = null;//等待分析的词
@@ -27,7 +27,7 @@ public class Pcfg {
 	 */
 	private HashMap<String, Triple> backMap = null;
 
-	public Pcfg(){
+	public PcfgParsing(){
 		guideMap = new HashMap<String, Double>();
 		wordsList = new ArrayList<String>();
 		nonTermList = new ArrayList<String>();
@@ -306,8 +306,8 @@ public class Pcfg {
 
 
 	public static void main(String[] args){
-		Pcfg model = new Pcfg();
-		String nonTermStr = model.loadGuide("pcfg_nonterm_guide.txt");
+		PcfgParsing model = new PcfgParsing();
+		String nonTermStr = model.loadGuide("guide/pcfg_guide.txt");
 		System.out.println(nonTermStr);
 		model.preHandle();
 		model.doHandle();

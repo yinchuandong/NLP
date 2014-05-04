@@ -1,4 +1,4 @@
-package PCFGParsing;
+package ParsingPCFG;
 
 public class Triple {
 	

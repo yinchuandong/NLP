@@ -1,4 +1,4 @@
-package CFGParsing;
+package ParingCFG;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -11,7 +11,7 @@ import java.util.Stack;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-public class Parsing {
+public class CFGParsing {
 	
 	HashMap<String, ArrayList<ArrayList<Node>>> guideMap;
 	ArrayList<String> wordsList;
@@ -23,7 +23,7 @@ public class Parsing {
 	int position = 0;//指向wordsList
 	int index = 0;//指向curNodes
 	
-	public Parsing(){
+	public CFGParsing(){
 		guideMap = new HashMap<String, ArrayList<ArrayList<Node>>>();
 		wordsList = new ArrayList<>();
 		curNodeList = new ArrayList<Node>();
@@ -289,8 +289,8 @@ public class Parsing {
 	}
 	
 	public static void main(String[] args) throws CloneNotSupportedException{
-		Parsing parsing = new Parsing();
-		parsing.readGuide("parsing_guide.txt");
+		CFGParsing parsing = new CFGParsing();
+		parsing.readGuide("guide/cfg_guide.txt");
 		System.out.println("------------end--------------");
 		parsing.display();
 		parsing.calculate();

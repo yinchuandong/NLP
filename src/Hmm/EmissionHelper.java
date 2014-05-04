@@ -118,7 +118,7 @@ public class EmissionHelper {
 		helper.calFrequency();
 		
 		System.out.println("begin write");
-		helper.write("dict/emission.txt");
+		helper.write("dict/hmm_emission.txt");
 		System.out.println("end write");
 		
 		long end = System.currentTimeMillis();

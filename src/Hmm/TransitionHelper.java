@@ -128,7 +128,7 @@ public class TransitionHelper {
 		helper.calFrequency();
 		
 		System.out.println("begin write");
-		helper.write("dict/tran.txt");
+		helper.write("dict/hmm_tran.txt");
 		System.out.println("end write");
 		
 		long end = System.currentTimeMillis();

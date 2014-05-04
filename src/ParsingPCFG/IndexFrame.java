@@ -22,6 +22,7 @@ import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.JTextArea;
+import javax.swing.JLabel;
 
 public class IndexFrame extends JFrame {
 
@@ -35,6 +36,7 @@ public class IndexFrame extends JFrame {
 	private JScrollPane scrollPane;
 	private boolean isGuidLoaded = false;
 	private PcfgParsing model;
+	private JLabel tipsLabel;
 
 	/**
 	 * Launch the application.
@@ -91,6 +93,9 @@ public class IndexFrame extends JFrame {
 					JOptionPane.showConfirmDialog(null, "内容不能为空");
 					return ;
 				}
+				
+				long beginTime = System.currentTimeMillis();
+
 				String[] arr = inputStr.split(" ");
 				ArrayList<String> wordsList = new ArrayList<>();
 				for (String string : arr) {
@@ -101,6 +106,10 @@ public class IndexFrame extends JFrame {
 				model.preHandle();
 				model.doHandle();
 				DefaultMutableTreeNode resultNode = model.output();
+				
+				long endTime = System.currentTimeMillis();
+				long time = endTime - beginTime;
+				tipsLabel.setText("耗时：" + time + "ms");
 				if(resultNode == null){
 					JOptionPane.showConfirmDialog(null, "fail to parse");
 					return;
@@ -171,20 +180,29 @@ public class IndexFrame extends JFrame {
 		importBtn = new JButton("\u5BFC\u5165\u89C4\u5219");
 		
 		JScrollPane scrollPane_1 = new JScrollPane();
+		
+		JLabel label = new JLabel("\u7ED3\u679C\uFF1A");
+		
+		tipsLabel = new JLabel("");
 		GroupLayout gl_panel = new GroupLayout(panel);
 		gl_panel.setHorizontalGroup(
 			gl_panel.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_panel.createSequentialGroup()
-					.addGroup(gl_panel.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panel.createParallelGroup(Alignment.LEADING, false)
+						.addComponent(scrollPane_1, GroupLayout.PREFERRED_SIZE, 209, GroupLayout.PREFERRED_SIZE)
 						.addGroup(gl_panel.createSequentialGroup()
 							.addComponent(importBtn)
 							.addGap(18)
 							.addComponent(startBtn))
-						.addComponent(scrollPane_1, GroupLayout.PREFERRED_SIZE, 209, GroupLayout.PREFERRED_SIZE))
-					.addPreferredGap(ComponentPlacement.RELATED, 101, Short.MAX_VALUE)
+						.addGroup(gl_panel.createSequentialGroup()
+							.addGap(12)
+							.addComponent(label, GroupLayout.PREFERRED_SIZE, 58, GroupLayout.PREFERRED_SIZE)
+							.addPreferredGap(ComponentPlacement.UNRELATED)
+							.addComponent(tipsLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+					.addPreferredGap(ComponentPlacement.RELATED, 117, Short.MAX_VALUE)
 					.addComponent(scrollPane, GroupLayout.PREFERRED_SIZE, 275, GroupLayout.PREFERRED_SIZE))
 				.addGroup(gl_panel.createSequentialGroup()
-					.addComponent(inputArea, GroupLayout.DEFAULT_SIZE, 575, Short.MAX_VALUE)
+					.addComponent(inputArea, GroupLayout.DEFAULT_SIZE, 589, Short.MAX_VALUE)
 					.addContainerGap())
 		);
 		gl_panel.setVerticalGroup(
@@ -193,12 +211,16 @@ public class IndexFrame extends JFrame {
 					.addComponent(inputArea, GroupLayout.PREFERRED_SIZE, 85, GroupLayout.PREFERRED_SIZE)
 					.addGap(6)
 					.addGroup(gl_panel.createParallelGroup(Alignment.BASELINE)
-						.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 304, Short.MAX_VALUE)
+						.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE)
 						.addGroup(gl_panel.createSequentialGroup()
 							.addGroup(gl_panel.createParallelGroup(Alignment.LEADING)
 								.addComponent(importBtn)
 								.addComponent(startBtn))
-							.addPreferredGap(ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addGroup(gl_panel.createParallelGroup(Alignment.BASELINE)
+								.addComponent(label)
+								.addComponent(tipsLabel))
+							.addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
 							.addComponent(scrollPane_1, GroupLayout.PREFERRED_SIZE, 265, GroupLayout.PREFERRED_SIZE)
 							.addContainerGap())))
 		);

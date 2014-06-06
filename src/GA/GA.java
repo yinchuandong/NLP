@@ -8,23 +8,64 @@ import java.util.Random;
 
 public class GA {
 
-	private int scale;// 种群规模
-	private int cityNum; // 城市数量，染色体长度
-	private int MAX_GEN; // 运行代数
-	private int[][] distance; // 距离矩阵
-	private int bestT;// 最佳出现代数
-	private int bestLength; // 最佳长度
-	private int[] bestTour; // 最佳路径
+	/**
+	 * 种群规模
+	 */
+	private int scale;
+	/**
+	 * // 城市数量，染色体长度
+	 */
+	private int cityNum; 
+	/**
+	 * // 运行代数
+	 */
+	private int MAX_GEN; 
+	/**
+	 * // 距离矩阵
+	 */
+	private int[][] distance; 
+	/**
+	 * // 最佳出现代数
+	 */
+	private int bestT;
+	/**
+	 * // 最佳长度
+	 */
+	private int bestLength; 
+	/**
+	 * // 最佳路径
+	 */
+	private int[] bestTour; 
 
-	// 初始种群，父代种群，行数表示种群规模，一行代表一个个体，即染色体，列表示染色体基因片段
+	/**
+	 *  初始种群，父代种群，行数表示种群规模，一行代表一个个体，即染色体，列表示染色体基因片段
+	 */
 	private int[][] oldPopulation;
-	private int[][] newPopulation;// 新的种群，子代种群
-	private int[] fitness;// 种群适应度，表示种群中各个个体的适应度
+	/**
+	 * // 新的种群，子代种群
+	 */
+	private int[][] newPopulation;
+	/**
+	 * // 种群适应度，表示种群中各个个体的适应度
+	 */
+	private int[] fitness;
 
-	private float[] Pi;// 种群中各个个体的累计概率
-	private float Pc;// 交叉概率
-	private float Pm;// 变异概率
-	private int t;// 当前代数
+	/**
+	 * // 种群中各个个体的累计概率
+	 */
+	private float[] Pi;
+	/**
+	 * // 交叉概率
+	 */
+	private float Pc;
+	/**
+	 * // 变异概率
+	 */
+	private float Pm;
+	/**
+	 * // 当前代数
+	 */
+	private int t;
 
 	private Random random;
 
@@ -147,6 +188,11 @@ public class GA {
 		 */
 	}
 
+	/**
+	 * 计算染色体的距离：起始城市,城市1,城市2...城市n,起始城市
+	 * @param chromosome
+	 * @return
+	 */
 	public int evaluate(int[] chromosome) {
 		// 0123
 		int len = 0;
@@ -159,7 +205,9 @@ public class GA {
 		return len;
 	}
 
-	// 计算种群中各个个体的累积概率，前提是已经计算出各个个体的适应度fitness[max]，作为赌轮选择策略一部分，Pi[max]
+	/**
+	 *  计算种群中各个个体的累积概率，前提是已经计算出各个个体的适应度fitness[max]，作为赌轮选择策略一部分，Pi[max]
+	 */
 	void countRate() {
 		int k;
 		double sumFitness = 0;// 适应度总和
@@ -181,8 +229,10 @@ public class GA {
 		 */
 	}
 
-	// 挑选某代种群中适应度最高的个体，直接复制到子代中
-	// 前提是已经计算出各个个体的适应度Fitness[max]
+	/**
+	 *  挑选某代种群中适应度最高的个体，直接复制到子代中，
+	 *  前提是已经计算出各个个体的适应度Fitness[max]
+	 */
 	public void selectBestGh() {
 		int k, i, maxid;
 		int maxevaluation;
@@ -209,7 +259,11 @@ public class GA {
 		copyGh(0, maxid);// 将当代种群中适应度最高的染色体k复制到新种群中，排在第一位0
 	}
 
-	// 复制染色体，k表示新染色体在种群中的位置，kk表示旧的染色体在种群中的位置
+	/**
+	 *  复制染色体，k表示新染色体在种群中的位置，kk表示旧的染色体在种群中的位置
+	 * @param k 表示新染色体在种群中的位置
+	 * @param kk 表示旧的染色体在种群中的位置
+	 */
 	public void copyGh(int k, int kk) {
 		int i;
 		for (i = 0; i < cityNum; i++) {
@@ -217,7 +271,9 @@ public class GA {
 		}
 	}
 
-	// 赌轮选择策略挑选
+	/**
+	 *  赌轮选择策略挑选
+	 */
 	public void select() {
 		int k, i, selectId;
 		float ran1;
@@ -237,7 +293,9 @@ public class GA {
 		}
 	}
 
-	//进化函数，正常交叉变异
+	/**
+	 * 进化函数，正常交叉变异
+	 */
 	public void evolution() {
 		int k;
 		// 挑选某代种群中适应度最高的个体
@@ -317,7 +375,11 @@ public class GA {
 
 	}
 
-	// 类OX交叉算子
+	/**
+	 *  类OX交叉算子
+	 * @param k1 染色体编号
+	 * @param k2 染色体编号
+	 */
 	void OXCross(int k1, int k2) {
 		int i, j, k, flag;
 		int ran1, ran2, temp;
@@ -398,7 +460,11 @@ public class GA {
 		// System.out.println("交叉完毕--------------------------");
 	}
 
-	// 交叉算子,相同染色体交叉产生不同子代染色体
+	/**
+	 *  交叉算子,相同染色体交叉产生不同子代染色体
+	 * @param k1 染色体编号
+	 * @param k2 染色体编号
+	 */
 	public void OXCross1(int k1, int k2) {
 		int i, j, k, flag;
 		int ran1, ran2, temp;
@@ -465,7 +531,10 @@ public class GA {
 		}
 	}
 
-	// 多次对换变异算子
+	/**
+	 *  多次对换变异算子
+	 * @param k
+	 */
 	public void OnCVariation(int k) {
 		int ran1, ran2, temp;
 		int count;// 对换次数

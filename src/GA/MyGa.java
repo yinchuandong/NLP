@@ -104,6 +104,14 @@ public class MyGa {
 	}
 	
 	/**
+	 * 生成一个0-65535之间的随机数
+	 * @return
+	 */
+	private int getRandomNum(){
+		return this.random.nextInt(65535);
+	}
+	
+	/**
 	 * 初始化算法，从file中加载数据文件
 	 * @param filename
 	 * @throws IOException 
@@ -182,21 +190,198 @@ public class MyGa {
 		}
 	}
 	
+	/**
+	 * 计算染色体的距离
+	 * @param chromosome 染色体，包含：起始城市,城市1,城市2...城市n
+	 * @return the total distance of all chromosome's cities;
+	 */
 	private int evaluate(int[] chromosome){
-		return 0;
+		int len = 0;
+		for(int i=1; i<cityNum; i++){
+			int preCity = chromosome[i - 1];
+			int curCity = chromosome[i];
+			len += distance[preCity][curCity];
+		}
+		return len;
 	}
 	
 	/**
-	 * 生成一个0-65535之间的随机数
-	 * @return
+	 * 计算种群中各个个体的累积概率，
+	 * 前提是已经计算出各个个体的适应度fitness[max]，
+	 * 作为赌轮选择策略一部分，Pi[max]
 	 */
-	private int getRandomNum(){
-		return this.random.nextInt(65535);
+	private void countRate(){
+		double sumFitness = 0; 
+		double[] tmpF = new double[scale];
+		for (int i = 0; i < scale; i++) {
+			//求倒数是因为距离越大，概率应该越小
+			tmpF[i]  = 10.0 / fitness[i];
+			sumFitness += tmpF[i];
+		}
+		
+		//计算累计概率
+		this.pi[0] = tmpF[0] / sumFitness;
+		for (int i = 1; i < scale; i++) {
+			pi[i] = (tmpF[i] / sumFitness) + pi[i - 1]; 
+		}
 	}
 	
+	/**
+	 *  挑选某代种群中适应度最高的个体，直接复制到子代中，
+	 *  前提是已经计算出各个个体的适应度Fitness[max]
+	 */
+	private void selectBestGh(){
+		int maxId = 0;
+		int maxEvaluation = fitness[0];
+		//记录适度最大的cityId和适度
+		for (int i = 1; i < scale; i++) {
+			if (maxEvaluation < fitness[i]) {
+				maxEvaluation = fitness[i];
+				maxId = i;
+			}
+		}
+		
+		//记录最好的染色体出现代数
+		if (bestLen > maxEvaluation) {
+			bestLen = maxEvaluation;
+			bestGen = curGen;
+			for (int i = 0; i < cityNum; i++) {
+				bestRoute[i] = oldPopulation[maxId][i];
+			}
+		}
+		// 将当代种群中适应度最高的染色体maxId复制到新种群中，排在第一位0
+		this.copyGh(0, maxId);
+	}
 	
+	/**
+	 * 复制染色体
+	 * @param curP 新染色体在种群中的位置
+	 * @param oldP 旧的染色体在种群中的位置
+	 */
+	private void copyGh(int curP, int oldP){
+		for (int i = 0; i < cityNum; i++) {
+			newPopulation[curP][i] = oldPopulation[oldP][i];
+		}
+	}
 	
+	/**
+	 * 赌轮选择策略挑选
+	 */
+	private void select(){
+		int selectId = 0;
+		double tmpRan;
+		for (int i = 1; i < scale; i++) {
+			tmpRan = (double)((getRandomNum() % 1000) / 1000.0);
+			for (int j = 0; j < scale; j++) {
+				selectId = j;
+				if (tmpRan <= pi[j]) {
+					break;
+				}
+			}
+			copyGh(i, selectId);
+		}
+	}
 	
+	/**
+	 * 进化函数，正常交叉变异
+	 */
+	public void evolution(){
+		// 挑选某代种群中适应度最高的个体
+		selectBestGh();
+		// 赌轮选择策略挑选scale-1个下一代个体
+		select();
+		
+		for (int i = 0; i < scale; i = i+2) {
+			crossover(i, i+1);
+		}
+	}
+	
+	/**
+	 * 两点交叉,相同染色体交叉产生不同子代染色体
+	 * @param k1 染色体编号 1|234|56
+	 * @param k2 染色体编号 7|890|34
+	 */
+	private void crossover(int k1, int k2){
+		//临时存放正在交叉的染色体
+		int[] gh1 = new int[cityNum];//染色体1
+		int[] gh2 = new int[cityNum];//染色体2
+		
+		//随机发生交叉的位置
+		int pos1 = getRandomNum() % cityNum;
+		int pos2 = getRandomNum() % cityNum;
+		//确保pos1和pos2两个位置不同
+		while(pos1 == pos2){
+			pos2 = getRandomNum() % cityNum;
+		}
+		
+		//确保pos1小于pos2
+		if (pos1 > pos2) {
+			int tmpPos = pos1;
+			pos1 = pos2;
+			pos2 = tmpPos;
+		}
+		
+		int i, j, k;
+		//记录当前复制交换位置
+		int flag; 
+		
+		// 将染色体1中的第三部分移到染色体2的首部
+		for(i = 0, j = pos2; j < cityNum; i++, j++){
+			gh2[i] = newPopulation[k1][j];
+		}
+		//染色体2原基因开始位置
+		flag = i;
+		
+		//复制源染色体2到gh2后面
+		for(k = 0, j = flag; j < cityNum; k++){
+			gh2[j] = newPopulation[k1][k];
+			//避免交换后，同一条染色体中存在重复的基因
+			for (i = 0; i < flag; i++) {
+				if (gh2[j] == gh2[i]) {
+					break;
+				}
+			}
+			//当染色体重不存在重复基因时，才复制下一个基因
+			if (i == flag) {
+				j++;
+			}
+		}
+		
+		//交换第一条染色体
+		flag = pos1;
+		for(k = 0, j = 0; k < cityNum; k++){
+			gh1[j] = newPopulation[k1][k];
+			//判断k2染色体的0-pos1的位置是否和k1的相同
+			for (i = 0; i < flag; i++) {
+				if (newPopulation[k2][i] == gh1[j]) {
+					break;
+				}
+			}
+			if (i == flag) {
+				j++;
+			}
+		}
+		
+		//交换k1的第三部分
+		flag = cityNum - pos1;
+		for (i = 0, j = flag; j < cityNum; i++, j++) {
+			gh1[j] = newPopulation[k2][i];
+		}
+		
+		// 交叉完毕放回种群
+		for (i = 0; i < cityNum; i++) {
+			newPopulation[k1][i] = gh1[i];
+			newPopulation[k2][i] = gh2[i];
+		}
+	}
+	
+	/**
+	 * 多次对换变异算子
+	 * @param k 染色体标号
+	 */
+	public void onVariation(int k){
+		
+	}
 	
 	
 	

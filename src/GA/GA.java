@@ -215,6 +215,7 @@ public class GA {
 		double[] tempf = new double[scale];
 
 		for (k = 0; k < scale; k++) {
+			//求倒数是因为距离越大，适度应该越小
 			tempf[k] = 10.0 / fitness[k];
 			sumFitness += tempf[k];
 		}

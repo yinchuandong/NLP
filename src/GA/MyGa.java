@@ -143,7 +143,7 @@ public class MyGa {
 				int yi = y.get(i);
 				int xj = x.get(j);
 				int yj = y.get(j);
-				double rij = Math.sqrt(((xi - xj)*(xi - xj) + (yi - yj)*(yi - yj)) / 10.0);
+				double rij = Math.sqrt(((xi - xj)*(xi - xj) + (yi - yj)*(yi - yj)));
 				int tij = (int)Math.round(rij);
 				if (tij < rij) {
 					distance[i][j] = tij + 1;
@@ -202,6 +202,9 @@ public class MyGa {
 			int curCity = chromosome[i];
 			len += distance[preCity][curCity];
 		}
+		// 城市n,起始城市
+		len += distance[chromosome[cityNum - 1]][chromosome[0]];
+//		System.out.println(" len:" + len);
 		return len;
 	}
 	
@@ -235,7 +238,7 @@ public class MyGa {
 		int maxEvaluation = fitness[0];
 		//记录适度最大的cityId和适度
 		for (int i = 1; i < scale; i++) {
-			if (maxEvaluation < fitness[i]) {
+			if (maxEvaluation > fitness[i]) {
 				maxEvaluation = fitness[i];
 				maxId = i;
 			}
@@ -249,12 +252,13 @@ public class MyGa {
 				bestRoute[i] = oldPopulation[maxId][i];
 			}
 		}
+		
 		// 将当代种群中适应度最高的染色体maxId复制到新种群中，排在第一位0
 		this.copyGh(0, maxId);
 	}
 	
 	/**
-	 * 复制染色体
+	 * 复制染色体，将oldPopulation复制到newPopulation
 	 * @param curP 新染色体在种群中的位置
 	 * @param oldP 旧的染色体在种群中的位置
 	 */
@@ -270,6 +274,7 @@ public class MyGa {
 	private void select(){
 		int selectId = 0;
 		double tmpRan;
+//		System.out.print("selectId:");
 		for (int i = 1; i < scale; i++) {
 			tmpRan = (double)((getRandomNum() % 1000) / 1000.0);
 			for (int j = 0; j < scale; j++) {
@@ -278,6 +283,7 @@ public class MyGa {
 					break;
 				}
 			}
+//			System.out.print(selectId+" ");
 			copyGh(i, selectId);
 		}
 	}
@@ -291,8 +297,26 @@ public class MyGa {
 		// 赌轮选择策略挑选scale-1个下一代个体
 		select();
 		
+		double ran;
 		for (int i = 0; i < scale; i = i+2) {
-			crossover(i, i+1);
+			ran = random.nextDouble();
+			if (ran < this.pc) {
+				//如果小于pc，则进行交叉
+				crossover(i, i+1);
+			}else{
+				//否者，进行变异
+				ran = random.nextDouble();
+				if (ran < this.pm) {
+					//变异染色体i
+					onVariation(i);
+				}
+				
+				ran = random.nextDouble();
+				if (ran < this.pm) {
+					//变异染色体i+1
+					onVariation(i + 1);
+				}
+			}
 		}
 	}
 	
@@ -377,14 +401,80 @@ public class MyGa {
 	
 	/**
 	 * 多次对换变异算子
+	 * 如：123456变成153426，基因2和5对换了
 	 * @param k 染色体标号
 	 */
-	public void onVariation(int k){
+	private void onVariation(int k){
+		int ran1, ran2, tmp;
+		//对换变异次数
+		int count;
+		
+		count = getRandomNum() % cityNum;
+		for (int i = 0; i < count; i++) {
+			ran1 = getRandomNum() % cityNum;
+			ran2 = getRandomNum() % cityNum;
+			while(ran1 == ran2){
+				ran2 = getRandomNum() % cityNum;
+			}
+			tmp = newPopulation[k][ran1];
+			newPopulation[k][ran1] = newPopulation[k][ran2];
+			newPopulation[k][ran2] = tmp;
+		}
+	}
+	
+	/**
+	 * 解决问题
+	 */
+	public void solve(){
+		//初始化种群
+		initGroup();
+		//计算初始适度
+		for (int i = 0; i < scale; i++) {
+			fitness[i] = this.evaluate(oldPopulation[i]);
+		}
+		// 计算初始化种群中各个个体的累积概率，pi[max]
+		countRate();
+		
+		System.out.println("初始种群...");
+		
+		//开始进化
+		for (curGen = 0; curGen < maxGen; curGen++) {
+			evolution();
+			// 将新种群newGroup复制到旧种群oldGroup中，准备下一代进化
+			for (int i = 0; i < scale; i++) {
+				for (int j = 0; j < cityNum; j++) {
+					oldPopulation[i][j] = newPopulation[i][j];
+				}
+			}
+			
+			//计算当前代的适度
+			for (int i = 0; i < scale; i++) {
+				fitness[i] = this.evaluate(oldPopulation[i]);
+			}
+			
+			// 计算当前种群中各个个体的累积概率，pi[max]
+			countRate();
+		}
+		
+		selectBestGh();
+		
+		System.out.println("最佳长度出现代数：");
+		System.out.println(bestGen);
+		System.out.println("最佳长度");
+		System.out.println(bestLen);
+		System.out.println("最佳路径：");
+		for (int i = 0; i < cityNum; i++) {
+			System.out.print(bestRoute[i] + ",");
+		}
 		
 	}
 	
 	
-	
+	public static void main(String[] args) throws IOException{
+		MyGa ga = new MyGa(6, 10, 0.8, 0.9);
+		ga.init("./gadata/data2.txt");
+		ga.solve();
+	}
 	
 	
 	

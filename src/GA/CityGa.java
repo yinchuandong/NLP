@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 
 public class CityGa {
@@ -22,7 +23,7 @@ public class CityGa {
 	/**
 	 * 城市列表
 	 */
-	private ArrayList<Integer> cityList;
+	private ArrayList<City> cityList;
 	
 	/**
 	 * 最大运行代数
@@ -62,7 +63,7 @@ public class CityGa {
 	/**
 	 * 种群适应度，表示种群中各个个体的适应度
 	 */
-	private int[] fitness;
+	private double[] fitness;
 	
 	/**
 	 * 距离矩阵，每行代表一条染色体
@@ -77,7 +78,7 @@ public class CityGa {
 	/**
 	 * 最佳长度
 	 */
-	private int bestLen;
+	private double bestLen;
 	
 	/**
 	 * 最佳路径
@@ -88,6 +89,20 @@ public class CityGa {
 	 * 随机数
 	 */
 	private Random random;
+	
+	/**
+	 * 酒店帮助类
+	 */
+	private HotelHelper hotelHelper;
+	
+	/**
+	 * 游玩天数的上限
+	 */
+	private double upDay = 3;
+	/**
+	 * 游玩天数的下限
+	 */
+	private double downDay = 2.0;
 
 	/**
 	 * 
@@ -101,6 +116,8 @@ public class CityGa {
 		this.maxGen = maxGen;
 		this.pc = pc;
 		this.pm = pm;
+		
+		this.hotelHelper = new HotelHelper("./gadata/hotel.txt");
 	}
 	
 	/**
@@ -119,42 +136,25 @@ public class CityGa {
 	public void init(String filename) throws IOException{
 		ArrayList<Integer> x = new ArrayList<Integer>();
 		ArrayList<Integer> y = new ArrayList<Integer>();
-		this.cityList = new ArrayList<Integer>();
+		this.cityList = new ArrayList<City>();
 		
-		//读取城市坐标信息
+		//读取城市信息
 		BufferedReader reader = new BufferedReader(new FileReader(filename));
 		String tmpStr = null;
-		while((tmpStr = reader.readLine()) != null){
-			String[] strArr = tmpStr.split(" ");
-			this.cityList.add(Integer.parseInt(strArr[0]));//城市Id
-			x.add(Integer.parseInt(strArr[1]));//x 坐标
-			y.add(Integer.parseInt(strArr[2]));//y 坐标
+		while((tmpStr = reader.readLine()) != null ){
+			String[] arr = tmpStr.split("\\s");
+			City city = new City();
+			city.setSid(arr[0]);
+			city.setDays(Double.parseDouble(arr[1]));
+			city.setPrice(Double.parseDouble(arr[2]));
+			city.setLng(Double.parseDouble(arr[3]));
+			city.setLat(Double.parseDouble(arr[4]));
+			city.setViewCount(Integer.parseInt(arr[5]));
+			cityList.add(city);
 		}
 		reader.close();
 		
 		this.cityNum = this.cityList.size();
-		this.distance = new double[cityNum][cityNum];
-		
-		//通过欧式距离计算距离矩阵
-		for (int i = 0; i < cityNum - 1; i++) {
-			distance[i][i] = 0; //对角线为0
-			for (int j = i+1; j < cityNum; j++) {
-				int xi = x.get(i);
-				int yi = y.get(i);
-				int xj = x.get(j);
-				int yj = y.get(j);
-				double rij = Math.sqrt(((xi - xj)*(xi - xj) + (yi - yj)*(yi - yj)));
-				int tij = (int)Math.round(rij);
-				if (tij < rij) {
-					distance[i][j] = tij + 1;
-					distance[j][i] = tij + 1;
-				}else{
-					distance[i][j] = tij;
-					distance[j][i] = tij;
-				}
-			}
-		}
-		distance[cityNum - 1][cityNum - 1] = 0;//最后一个城市的距离为0，for循环里没有初始化
 		
 		this.bestLen = Integer.MAX_VALUE;
 		this.bestGen = 0;
@@ -163,7 +163,7 @@ public class CityGa {
 		
 		this.newPopulation = new int[scale][cityNum];
 		this.oldPopulation = new int[scale][cityNum];
-		this.fitness = new int[scale];
+		this.fitness = new double[scale];
 		this.pi = new double[scale];
 		
 		this.random = new Random(System.currentTimeMillis());
@@ -191,21 +191,48 @@ public class CityGa {
 	}
 	
 	/**
-	 * 计算染色体的距离
-	 * @param chromosome 染色体，包含：起始城市,城市1,城市2...城市n
+	 * 评价函数，用于计算适度
+	 * @param chromosome 染色体，包含：城市1,城市2...城市n
 	 * @return the total distance of all chromosome's cities;
 	 */
-	private int evaluate(int[] chromosome){
-		int len = 0;
-		for(int i=1; i<cityNum; i++){
-			int preCity = chromosome[i - 1];
-			int curCity = chromosome[i];
-			len += distance[preCity][curCity];
+	private double evaluate(int[] chromosome){
+		double ticketPrice = 0;//门票
+		double hotness = 0;//热度
+		//酒店当前染色体对应的酒店信息
+		ArrayList<Hotel> hotels = new ArrayList<Hotel>();
+		for (int i = 0; i < chromosome.length; i++) {
+			if (chromosome[i] == 1) {
+				City city = cityList.get(i);
+				ticketPrice +=  city.getPrice();
+				hotness += (double)city.getViewCount();
+				//获得该景点的酒店信息
+				Hotel hotel = hotelHelper.getHotel(city.getLng(), city.getLat());
+				if (hotel != null) {
+					hotels.add(hotel);
+				}
+			}
 		}
-		// 城市n,起始城市
-		len += distance[chromosome[cityNum - 1]][chromosome[0]];
-//		System.out.println(" len:" + len);
-		return len;
+		
+		Collections.sort(hotels);
+		double hotelPrice = 0.0;
+		/* 判断酒店的个数是否大于需要入住的天数
+		 * 如果大于则按照入住的天数计算价格
+		 * 如果小于则计算所有酒店的价格，剩余天数就按照最低价格计算
+		 */
+		int len = Math.min(hotels.size(), (int)upDay);
+		if (len != 0) {
+			for (int i = 0; i < len; i++) {
+				hotelPrice += hotels.get(i).getPrice();
+			}
+			int span = (int)(upDay - hotels.size());
+			for (int i = 0; i < span; i++) {
+				hotelPrice += hotels.get(i).getPrice();
+			}
+		}
+		
+		double price = hotelPrice + ticketPrice;
+		double fitness = (10000.0 / (price + 10.0)) * 0.6 + Math.pow(hotness, 1.0/3.0) * 0.4;
+		return fitness;
 	}
 	
 	/**
@@ -235,7 +262,7 @@ public class CityGa {
 	 */
 	private void selectBestGh(){
 		int maxId = 0;
-		int maxEvaluation = fitness[0];
+		double maxEvaluation = fitness[0];
 		//记录适度最大的cityId和适度
 		for (int i = 1; i < scale; i++) {
 			if (maxEvaluation > fitness[i]) {

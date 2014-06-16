@@ -626,9 +626,14 @@ public class GA {
 	 */
 	public static void main(String[] args) throws IOException {
 		System.out.println("Start....");
+		long begin = System.currentTimeMillis();
 		GA ga = new GA(30, 48, 1000, 0.8f, 0.9f);
 		ga.init("./gadata/data.txt");
 		ga.solve();
+		long end = System.currentTimeMillis();
+		long time = (end - begin);
+		System.out.println();
+		System.out.println("ºÄÊ±£º"+ time +" ms");
 	}
 
 }

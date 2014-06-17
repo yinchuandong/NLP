@@ -134,8 +134,6 @@ public class CityGa {
 	 * @throws IOException 
 	 */
 	public void init(String filename) throws IOException{
-		ArrayList<Integer> x = new ArrayList<Integer>();
-		ArrayList<Integer> y = new ArrayList<Integer>();
 		this.cityList = new ArrayList<City>();
 		
 		//读取城市信息
@@ -156,7 +154,7 @@ public class CityGa {
 		
 		this.cityNum = this.cityList.size();
 		
-		this.bestLen = Integer.MAX_VALUE;
+		this.bestLen = Integer.MIN_VALUE;
 		this.bestGen = 0;
 		this.bestRoute = new int[cityNum];
 		this.curGen = 0;
@@ -171,21 +169,14 @@ public class CityGa {
 	
 	/**
 	 * 初始化种群
+	 * 以01001的形式编码染色体
 	 */
 	private void initGroup(){
-		int i, j, k;
+		int i, k;
 		for (k = 0; k < scale; k++) {
-			for (i = 0; i < cityNum; ) {
-				oldPopulation[k][i] = getRandomNum() % cityNum;
-				//确保随机产生的染色体中没有重复的基因
-				for (j = 0; j < i; j++) {
-					if (oldPopulation[k][i] == oldPopulation[k][j]) {
-						break;
-					}
-				}
-				if (i == j) {
-					i++;
-				}
+			for (i = 0; i < cityNum; i++) {
+				//以01001的形式编码
+				oldPopulation[k][i] = getRandomNum() % 2;
 			}
 		}
 	}
@@ -198,6 +189,7 @@ public class CityGa {
 	private double evaluate(int[] chromosome){
 		double ticketPrice = 0;//门票
 		double hotness = 0;//热度
+		double days = 0.0;
 		//酒店当前染色体对应的酒店信息
 		ArrayList<Hotel> hotels = new ArrayList<Hotel>();
 		for (int i = 0; i < chromosome.length; i++) {
@@ -205,12 +197,17 @@ public class CityGa {
 				City city = cityList.get(i);
 				ticketPrice +=  city.getPrice();
 				hotness += (double)city.getViewCount();
+				days += city.getDays();
 				//获得该景点的酒店信息
 				Hotel hotel = hotelHelper.getHotel(city.getLng(), city.getLat());
 				if (hotel != null) {
 					hotels.add(hotel);
 				}
 			}
+		}
+		
+		if (days <= downDay || days > upDay) {
+			return 0.01;
 		}
 		
 		Collections.sort(hotels);
@@ -226,12 +223,13 @@ public class CityGa {
 			}
 			int span = (int)(upDay - hotels.size());
 			for (int i = 0; i < span; i++) {
-				hotelPrice += hotels.get(i).getPrice();
+				hotelPrice += hotels.get(0).getPrice();
 			}
 		}
 		
 		double price = hotelPrice + ticketPrice;
 		double fitness = (10000.0 / (price + 10.0)) * 0.6 + Math.pow(hotness, 1.0/3.0) * 0.4;
+//		System.out.println("fiteness:" + fitness);
 		return fitness;
 	}
 	
@@ -242,17 +240,14 @@ public class CityGa {
 	 */
 	private void countRate(){
 		double sumFitness = 0; 
-		double[] tmpF = new double[scale];
 		for (int i = 0; i < scale; i++) {
-			//求倒数是因为距离越大，概率应该越小
-			tmpF[i]  = 10.0 / fitness[i];
-			sumFitness += tmpF[i];
+			sumFitness += fitness[i];
 		}
 		
 		//计算累计概率
-		this.pi[0] = tmpF[0] / sumFitness;
+		this.pi[0] = fitness[0] / sumFitness;
 		for (int i = 1; i < scale; i++) {
-			pi[i] = (tmpF[i] / sumFitness) + pi[i - 1]; 
+			pi[i] = (fitness[i] / sumFitness) + pi[i - 1]; 
 		}
 	}
 	
@@ -265,14 +260,14 @@ public class CityGa {
 		double maxEvaluation = fitness[0];
 		//记录适度最大的cityId和适度
 		for (int i = 1; i < scale; i++) {
-			if (maxEvaluation > fitness[i]) {
+			if (maxEvaluation < fitness[i]) {
 				maxEvaluation = fitness[i];
 				maxId = i;
 			}
 		}
 		
 		//记录最好的染色体出现代数
-		if (bestLen > maxEvaluation) {
+		if (bestLen < maxEvaluation) {
 			bestLen = maxEvaluation;
 			bestGen = curGen;
 			for (int i = 0; i < cityNum; i++) {
@@ -353,10 +348,6 @@ public class CityGa {
 	 * @param k2 染色体编号 7|890|34
 	 */
 	private void crossover(int k1, int k2){
-		//临时存放正在交叉的染色体
-		int[] gh1 = new int[cityNum];//染色体1
-		int[] gh2 = new int[cityNum];//染色体2
-		
 		//随机发生交叉的位置
 		int pos1 = getRandomNum() % cityNum;
 		int pos2 = getRandomNum() % cityNum;
@@ -372,57 +363,11 @@ public class CityGa {
 			pos2 = tmpPos;
 		}
 		
-		int i, j, k;
-		//记录当前复制交换位置
-		int flag; 
-		
-		// 将染色体1中的第三部分移到染色体2的首部
-		for(i = 0, j = pos2; j < cityNum; i++, j++){
-			gh2[i] = newPopulation[k1][j];
-		}
-		//染色体2原基因开始位置
-		flag = i;
-		
-		//复制源染色体2到gh2后面
-		for(k = 0, j = flag; j < cityNum; k++){
-			gh2[j] = newPopulation[k1][k];
-			//避免交换后，同一条染色体中存在重复的基因
-			for (i = 0; i < flag; i++) {
-				if (gh2[j] == gh2[i]) {
-					break;
-				}
-			}
-			//当染色体重不存在重复基因时，才复制下一个基因
-			if (i == flag) {
-				j++;
-			}
-		}
-		
-		//交换第一条染色体
-		flag = pos1;
-		for(k = 0, j = 0; k < cityNum; k++){
-			gh1[j] = newPopulation[k1][k];
-			//判断k2染色体的0-pos1的位置是否和k1的相同
-			for (i = 0; i < flag; i++) {
-				if (newPopulation[k2][i] == gh1[j]) {
-					break;
-				}
-			}
-			if (i == flag) {
-				j++;
-			}
-		}
-		
-		//交换k1的第三部分
-		flag = cityNum - pos1;
-		for (i = 0, j = flag; j < cityNum; i++, j++) {
-			gh1[j] = newPopulation[k2][i];
-		}
-		
-		// 交叉完毕放回种群
-		for (i = 0; i < cityNum; i++) {
-			newPopulation[k1][i] = gh1[i];
-			newPopulation[k2][i] = gh2[i];
+		//交换两条染色体中间部分
+		for (int i = pos1; i < pos2; i++) {
+			int t = newPopulation[k1][i];
+			newPopulation[k1][i] = newPopulation[k2][i];
+			newPopulation[k2][i] = t;
 		}
 	}
 	
@@ -432,21 +377,10 @@ public class CityGa {
 	 * @param k 染色体标号
 	 */
 	private void onVariation(int k){
-		int ran1, ran2, tmp;
 		//对换变异次数
-		int count;
-		
-		count = getRandomNum() % cityNum;
-		for (int i = 0; i < count; i++) {
-			ran1 = getRandomNum() % cityNum;
-			ran2 = getRandomNum() % cityNum;
-			while(ran1 == ran2){
-				ran2 = getRandomNum() % cityNum;
-			}
-			tmp = newPopulation[k][ran1];
-			newPopulation[k][ran1] = newPopulation[k][ran2];
-			newPopulation[k][ran2] = tmp;
-		}
+		int index;
+		index = getRandomNum() % cityNum;
+		newPopulation[k][index] = getRandomNum() % 2;
 	}
 	
 	/**
@@ -485,6 +419,26 @@ public class CityGa {
 		
 		selectBestGh();
 		
+		System.out.println("最后种群");
+		for (int i = 0; i < scale; i++) {
+			double price = 0.0;
+			double hotness = 0.0;
+			double days = 0.0;
+			for (int j = 0; j < cityNum; j++) {
+//				System.out.print(oldPopulation[i][j] + ",");
+				if (oldPopulation[i][j] == 1) {
+					City city = cityList.get(j);
+					price += city.getPrice();
+					hotness += city.getViewCount();
+					days += city.getDays();
+					System.out.print(city.getSid() + ",");
+				}
+			}
+			System.out.print("  天数：" + days + " --价格：" + price + " --热度:" + hotness);
+			System.out.print(" 适度：" + fitness[i]);
+			System.out.println();
+		}
+		
 		System.out.println("最佳长度出现代数：");
 		System.out.println(bestGen);
 		System.out.println("最佳长度");
@@ -494,13 +448,22 @@ public class CityGa {
 			System.out.print(bestRoute[i] + ",");
 		}
 		
+		
+		
 	}
 	
 	
 	public static void main(String[] args) throws IOException{
-		CityGa ga = new CityGa(30, 1000, 0.8, 0.9);
-		ga.init("./gadata/data2.txt");
+		long begin = System.currentTimeMillis();
+		
+		CityGa ga = new CityGa(300, 100, 0.8, 0.9);
+		ga.init("./gadata/city.txt");
 		ga.solve();
+		
+		long end = System.currentTimeMillis();
+		long time = (end - begin);
+		System.out.println();
+		System.out.println("耗时："+ time +" ms");
 	}
 	
 	

@@ -236,7 +236,7 @@ public class MyGa {
 	private void selectBestGh(){
 		int maxId = 0;
 		int maxEvaluation = fitness[0];
-		//记录适度最大的cityId和适度
+		//记录距离最小的cityId和适度
 		for (int i = 1; i < scale; i++) {
 			if (maxEvaluation > fitness[i]) {
 				maxEvaluation = fitness[i];

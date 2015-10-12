@@ -17,7 +17,7 @@ public class TransitionHelper {
 	/**
 	 * 转移概率 key：v-n的形式
 	 */
-	HashMap<String, PosModel> matrixMap;
+	HashMap<String, POS> matrixMap;
 	
 	/**
 	 * 矩阵一行的总和 key: v的形式，表示v转移到其他的概率
@@ -25,7 +25,7 @@ public class TransitionHelper {
 	HashMap<String, Integer> sumOfLine;
 	
 	public TransitionHelper(){
-		matrixMap = new HashMap<String, PosModel>();
+		matrixMap = new HashMap<String, POS>();
 		sumOfLine = new HashMap<String, Integer>();
 	}
 	
@@ -59,10 +59,10 @@ public class TransitionHelper {
 						jPosStr = jPosStr.substring(0, jIndex);
 					}
 					
-					PosModel posModel;
+					POS posModel;
 					String key = iPosStr + "-" + jPosStr;
 					if (!matrixMap.containsKey(key)) {
-						posModel = new PosModel();
+						posModel = new POS();
 						posModel.iPos = iPosStr;
 						posModel.jPos = jPosStr;
 						posModel.num = 1;
@@ -93,7 +93,7 @@ public class TransitionHelper {
 		Iterator<String> iterator = matrixMap.keySet().iterator();
 		while (iterator.hasNext()) {
 			String key = iterator.next();
-			PosModel model = matrixMap.get(key);
+			POS model = matrixMap.get(key);
 			int sum = sumOfLine.get(model.iPos);
 			model.frequency = ((double)model.num / sum);
 		}
@@ -105,7 +105,7 @@ public class TransitionHelper {
 			Iterator<String> iterator = matrixMap.keySet().iterator();
 			while (iterator.hasNext()) {
 				String key = iterator.next();
-				PosModel model = matrixMap.get(key);
+				POS model = matrixMap.get(key);
 				String tmpStr = model.iPos + "," + model.jPos + "," + model.num + "," + model.frequency + "\r\n";
 				writer.write(tmpStr);
 				writer.flush();

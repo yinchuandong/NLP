@@ -14,12 +14,12 @@ public class InitHelper {
 	/**
 	 * 初始概率 key：v-充满 的形式
 	 */
-	HashMap<String, PosModel> matrixMap;
+	HashMap<String, POS> matrixMap;
 	
 	int sumOfMatrix = 0;
 	
 	public InitHelper(){
-		matrixMap = new HashMap<String, PosModel>();
+		matrixMap = new HashMap<String, POS>();
 	}
 	
 	public void loadDict(String path){
@@ -50,9 +50,9 @@ public class InitHelper {
 						posStr = posStr.substring(0, rightIndex);
 					}
 					String key = posStr;
-					PosModel model;
+					POS model;
 					if (!matrixMap.containsKey(key)) {
-						model = new PosModel();
+						model = new POS();
 						model.iPos = posStr;
 						model.num = 1;
 						matrixMap.put(key, model);
@@ -75,7 +75,7 @@ public class InitHelper {
 		Iterator<String> iterator = matrixMap.keySet().iterator();
 		while (iterator.hasNext()) {
 			String key = iterator.next();
-			PosModel model = matrixMap.get(key);
+			POS model = matrixMap.get(key);
 			model.frequency = ((double)model.num / sumOfMatrix);
 		}
 		System.out.println(sumOfMatrix);
@@ -87,7 +87,7 @@ public class InitHelper {
 			Iterator<String> iterator = matrixMap.keySet().iterator();
 			while (iterator.hasNext()) {
 				String key = iterator.next();
-				PosModel model = matrixMap.get(key);
+				POS model = matrixMap.get(key);
 				String tmpStr = model.iPos + "," + model.num + "," + model.frequency + "\r\n";
 				writer.write(tmpStr);
 				writer.flush();

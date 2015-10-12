@@ -14,7 +14,7 @@ public class EmissionHelper {
 	/**
 	 * 发射概率 key：v-充满 的形式
 	 */
-	HashMap<String, PosModel> matrixMap;
+	HashMap<String, POS> matrixMap;
 	
 	/**
 	 * 矩阵一行的总和 key: v的形式，表示v转移到其他的概率
@@ -22,7 +22,7 @@ public class EmissionHelper {
 	HashMap<String, Integer> sumOfLine;
 	
 	public EmissionHelper(){
-		matrixMap = new HashMap<String, PosModel>();
+		matrixMap = new HashMap<String, POS>();
 		sumOfLine = new HashMap<String, Integer>();
 	}
 	
@@ -52,9 +52,9 @@ public class EmissionHelper {
 						posStr = posStr.substring(0, rightIndex);
 					}
 					String key = posStr + "-" + wordStr;
-					PosModel model;
+					POS model;
 					if (!matrixMap.containsKey(key)) {
-						model = new PosModel();
+						model = new POS();
 						model.iPos = posStr;
 						model.jPos = wordStr;
 						model.num = 1;
@@ -83,7 +83,7 @@ public class EmissionHelper {
 		Iterator<String> iterator = matrixMap.keySet().iterator();
 		while (iterator.hasNext()) {
 			String key = iterator.next();
-			PosModel model = matrixMap.get(key);
+			POS model = matrixMap.get(key);
 			int sum = sumOfLine.get(model.iPos);
 			model.frequency = ((double)model.num / sum);
 		}
@@ -95,7 +95,7 @@ public class EmissionHelper {
 			Iterator<String> iterator = matrixMap.keySet().iterator();
 			while (iterator.hasNext()) {
 				String key = iterator.next();
-				PosModel model = matrixMap.get(key);
+				POS model = matrixMap.get(key);
 				String tmpStr = model.iPos + "," + model.jPos + "," + model.num + "," + model.frequency + "\r\n";
 				writer.write(tmpStr);
 				writer.flush();

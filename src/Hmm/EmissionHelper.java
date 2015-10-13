@@ -85,7 +85,7 @@ public class EmissionHelper {
 			String key = iterator.next();
 			POS model = matrixMap.get(key);
 			int sum = sumOfLine.get(model.iPos);
-			model.frequency = ((double)model.num / sum);
+			model.prob = ((double)model.num / sum);
 		}
 	}
 	
@@ -96,7 +96,7 @@ public class EmissionHelper {
 			while (iterator.hasNext()) {
 				String key = iterator.next();
 				POS model = matrixMap.get(key);
-				String tmpStr = model.iPos + "," + model.jPos + "," + model.num + "," + model.frequency + "\r\n";
+				String tmpStr = model.iPos + "," + model.jPos + "," + model.num + "," + model.prob + "\r\n";
 				writer.write(tmpStr);
 				writer.flush();
 			}

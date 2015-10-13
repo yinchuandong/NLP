@@ -76,7 +76,7 @@ public class InitHelper {
 		while (iterator.hasNext()) {
 			String key = iterator.next();
 			POS model = matrixMap.get(key);
-			model.frequency = ((double)model.num / sumOfMatrix);
+			model.prob = ((double)model.num / sumOfMatrix);
 		}
 		System.out.println(sumOfMatrix);
 	}
@@ -88,7 +88,7 @@ public class InitHelper {
 			while (iterator.hasNext()) {
 				String key = iterator.next();
 				POS model = matrixMap.get(key);
-				String tmpStr = model.iPos + "," + model.num + "," + model.frequency + "\r\n";
+				String tmpStr = model.iPos + "," + model.num + "," + model.prob + "\r\n";
 				writer.write(tmpStr);
 				writer.flush();
 			}
